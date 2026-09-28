@@ -1,0 +1,238 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="清算 · 科学与投资计算器" Width="1080" Height="850" MinWidth="500" MinHeight="750"
+        WindowStartupLocation="CenterScreen" Background="#F3F5F8" Foreground="#202834"
+        FontFamily="Segoe UI, Microsoft YaHei UI" FontSize="13" UseLayoutRounding="True">
+  <Window.Resources>
+    <SolidColorBrush x:Key="Muted" Color="#6D7888"/>
+    <Style TargetType="Button">
+      <Setter Property="Background" Value="White"/><Setter Property="Foreground" Value="#202834"/>
+      <Setter Property="BorderBrush" Value="#E0E5EB"/><Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="Padding" Value="12,7"/><Setter Property="Cursor" Value="Hand"/>
+      <Setter Property="Focusable" Value="False"/><Setter Property="HorizontalContentAlignment" Value="Center"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+      <Setter Property="Template">
+        <Setter.Value><ControlTemplate TargetType="Button">
+          <Border x:Name="Surface" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="7" Padding="{TemplateBinding Padding}">
+            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Surface" Property="Opacity" Value="0.76"/></Trigger>
+            <Trigger Property="IsPressed" Value="True"><Setter TargetName="Surface" Property="Opacity" Value="0.52"/></Trigger>
+            <Trigger Property="IsEnabled" Value="False"><Setter TargetName="Surface" Property="Opacity" Value="0.35"/></Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate></Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="Quiet" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+      <Setter Property="Background" Value="Transparent"/><Setter Property="BorderThickness" Value="0"/><Setter Property="Padding" Value="10,6"/>
+    </Style>
+    <Style x:Key="Key" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+      <Setter Property="Margin" Value="3"/><Setter Property="FontSize" Value="19"/><Setter Property="Padding" Value="3"/>
+    </Style>
+    <Style x:Key="FunctionKey" TargetType="Button" BasedOn="{StaticResource Key}">
+      <Setter Property="Background" Value="#EAF0F6"/><Setter Property="FontSize" Value="16"/>
+    </Style>
+    <Style x:Key="Accent" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+      <Setter Property="Background" Value="#1769C2"/><Setter Property="Foreground" Value="White"/><Setter Property="BorderBrush" Value="#1769C2"/>
+    </Style>
+    <Style TargetType="TextBox">
+      <Setter Property="Padding" Value="9,7"/><Setter Property="BorderBrush" Value="#DCE3EC"/>
+      <Setter Property="BorderThickness" Value="1"/><Setter Property="SelectionBrush" Value="#9CC5F2"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style x:Key="Card" TargetType="Border">
+      <Setter Property="Background" Value="White"/><Setter Property="BorderBrush" Value="#E0E5EB"/>
+      <Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="12"/>
+    </Style>
+    <Style TargetType="DataGridColumnHeader">
+      <Setter Property="Background" Value="#EFF3F8"/><Setter Property="Foreground" Value="#596578"/>
+      <Setter Property="Padding" Value="10,12"/><Setter Property="BorderBrush" Value="#E0E5EB"/>
+      <Setter Property="BorderThickness" Value="0,0,0,1"/>
+    </Style>
+    <Style TargetType="DataGridCell">
+      <Setter Property="Padding" Value="8,10"/><Setter Property="BorderThickness" Value="0"/>
+      <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="DataGridCell"><Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}"><ContentPresenter VerticalAlignment="Center"/></Border></ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <Style TargetType="DataGridRow">
+      <Setter Property="Background" Value="White"/>
+      <Style.Triggers><Trigger Property="IsSelected" Value="True"><Setter Property="Background" Value="#E5EFFC"/><Setter Property="Foreground" Value="#202834"/></Trigger></Style.Triggers>
+    </Style>
+  </Window.Resources>
+  <Grid Margin="22,12,22,16">
+    <Grid.RowDefinitions><RowDefinition Height="58"/><RowDefinition Height="48"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+    <Grid>
+      <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+        <Border Background="#1769C2" CornerRadius="10" Width="38" Height="38" Margin="0,0,12,0"><TextBlock Text="=" Foreground="White" FontSize="28" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-4,0,0"/></Border>
+        <StackPanel><TextBlock Text="清算" FontSize="23" FontWeight="SemiBold"/><TextBlock Text="让每一步计算，都清清楚楚。" Foreground="{StaticResource Muted}" FontSize="11"/></StackPanel>
+      </StackPanel>
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+        <Button x:Name="TopmostButton" Content="置顶" Style="{StaticResource Quiet}" ToolTip="让窗口保持在最上层"/>
+        <Button x:Name="HelpButton" Content="使用说明" Style="{StaticResource Quiet}"/>
+      </StackPanel>
+    </Grid>
+    <Grid Grid.Row="1" Margin="0,2,0,10">
+      <StackPanel Orientation="Horizontal">
+        <Button x:Name="CalculatorTab" Content="科学计算" Style="{StaticResource Accent}" Padding="18,6" Margin="0,0,7,0"/>
+        <Button x:Name="PortfolioTab" Content="投资组合" Padding="18,6"/>
+      </StackPanel>
+      <Button x:Name="HistoryToggle" Content="历史记录  ›" HorizontalAlignment="Right" Style="{StaticResource Quiet}"/>
+    </Grid>
+    <Grid x:Name="CalculatorPage" Grid.Row="2">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition x:Name="HistoryGap" Width="18"/><ColumnDefinition x:Name="HistoryColumn" Width="304"/></Grid.ColumnDefinitions>
+      <Grid>
+        <Grid.RowDefinitions><RowDefinition Height="198"/><RowDefinition Height="42"/><RowDefinition Height="38"/><RowDefinition Height="40"/><RowDefinition Height="*"/><RowDefinition Height="29"/></Grid.RowDefinitions>
+        <Border Style="{StaticResource Card}" Padding="16,10,16,12">
+          <Grid>
+            <Grid.RowDefinitions><RowDefinition Height="26"/><RowDefinition Height="74"/><RowDefinition Height="24"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+            <TextBlock Text="表达式" Foreground="{StaticResource Muted}" VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+              <Button x:Name="UndoButton" Content="↶" FontSize="18" Style="{StaticResource Quiet}" Padding="8,0" ToolTip="撤销 Ctrl+Z"/>
+              <Button x:Name="RedoButton" Content="↷" FontSize="18" Style="{StaticResource Quiet}" Padding="8,0" ToolTip="重做 Ctrl+Y / Ctrl+Shift+Z"/>
+            </StackPanel>
+            <Grid Grid.Row="1">
+              <TextBox x:Name="ExpressionBox" FontFamily="Consolas, Microsoft YaHei UI" FontSize="24" BorderThickness="0" Padding="0,7" Background="Transparent" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top" VerticalScrollBarVisibility="Auto" IsUndoEnabled="True" UndoLimit="-1" SpellCheck.IsEnabled="False"/>
+              <TextBlock x:Name="ExpressionPlaceholder" Text="点击这里，输入或粘贴表达式" Foreground="#A2ABBA" FontSize="19" Margin="0,9,0,0" IsHitTestVisible="False"/>
+            </Grid>
+            <TextBlock x:Name="ResultState" Grid.Row="2" Text="支持括号、函数与任意位置编辑" Foreground="{StaticResource Muted}" FontSize="11" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+            <Grid Grid.Row="3">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+              <TextBox x:Name="ResultBox" Text="0" IsReadOnly="True" BorderThickness="0" Background="Transparent" FontFamily="Consolas" Foreground="#1769C2" FontSize="30" Padding="0" HorizontalScrollBarVisibility="Auto" VerticalContentAlignment="Center"/>
+              <Button x:Name="CopyResultButton" Grid.Column="1" Content="复制" Style="{StaticResource Quiet}" Foreground="#1769C2" ToolTip="复制结果 Ctrl+Shift+C"/>
+            </Grid>
+          </Grid>
+        </Border>
+        <Grid Grid.Row="1" Margin="0,4,0,0">
+          <StackPanel Orientation="Horizontal">
+            <Button x:Name="AngleButton" Content="DEG ▾" Style="{StaticResource Quiet}" ToolTip="角度制：DEG 度 / RAD 弧度 / GRAD 百分度"/>
+            <Button x:Name="FormatButton" Content="F–E" Style="{StaticResource Quiet}" ToolTip="切换科学计数法显示，不改变计算精度"/>
+            <Button x:Name="AnswerButton" Content="Ans" Style="{StaticResource Quiet}" ToolTip="插入上一条成功计算的结果"/>
+          </StackPanel>
+          <Button x:Name="ContinueButton" Content="结果接着算 ↗" HorizontalAlignment="Right" Style="{StaticResource Quiet}" Foreground="#1769C2" ToolTip="用当前结果替换表达式（可以撤销）"/>
+        </Grid>
+        <UniformGrid Grid.Row="2" Columns="6" x:Name="MemoryBar">
+          <Button x:Name="MemoryClear" Content="MC" Style="{StaticResource Quiet}" ToolTip="清空计算器内存"/>
+          <Button x:Name="MemoryRecall" Content="MR" Style="{StaticResource Quiet}" ToolTip="插入最新存储的值"/>
+          <Button x:Name="MemoryAdd" Content="M+" Style="{StaticResource Quiet}" ToolTip="将当前值累加到最新内存"/>
+          <Button x:Name="MemorySubtract" Content="M−" Style="{StaticResource Quiet}" ToolTip="从最新内存中减去当前值"/>
+          <Button x:Name="MemoryStore" Content="MS" Style="{StaticResource Quiet}" ToolTip="新存储一条数值"/>
+          <Button x:Name="MemoryListButton" Content="M ▾" Style="{StaticResource Quiet}" ToolTip="查看全部内存值"/>
+        </UniformGrid>
+        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,2,0,3">
+          <Button x:Name="TrigButton" Content="∠  三角函数 ▾" Style="{StaticResource Quiet}"/>
+          <Button x:Name="FunctionButton" Content="ƒ  函数 ▾" Style="{StaticResource Quiet}"/>
+        </StackPanel>
+        <UniformGrid x:Name="Keypad" Grid.Row="4" Columns="5" Rows="7" Margin="-3,0,-3,0">
+          <Button x:Name="SecondButton" Content="2ⁿᵈ" Tag="second" Style="{StaticResource FunctionKey}"/>
+          <Button Content="π" Tag="π" Style="{StaticResource FunctionKey}"/>
+          <Button Content="e" Tag="e" Style="{StaticResource FunctionKey}"/>
+          <Button Content="C" Tag="clear" Foreground="#B42318" Style="{StaticResource FunctionKey}" ToolTip="清空表达式 Esc（可撤销，历史保留）"/>
+          <Button Content="⌫" Tag="backspace" Style="{StaticResource FunctionKey}" ToolTip="退格：删除选区或光标前的字符"/>
+          <Button x:Name="SquareButton" Content="x²" Tag="square" Style="{StaticResource FunctionKey}"/>
+          <Button Content="1/x" Tag="reciprocal" Style="{StaticResource FunctionKey}"/>
+          <Button Content="|x|" Tag="absolute" Style="{StaticResource FunctionKey}"/>
+          <Button Content="exp" Tag="E" Style="{StaticResource FunctionKey}" ToolTip="输入科学计数法指数，例如 2.5E6"/>
+          <Button Content="mod" Tag=" mod " Style="{StaticResource FunctionKey}"/>
+          <Button x:Name="RootButton" Content="²√x" Tag="root" Style="{StaticResource FunctionKey}"/>
+          <Button Content="(" Tag="(" Style="{StaticResource FunctionKey}"/>
+          <Button Content=")" Tag=")" Style="{StaticResource FunctionKey}"/>
+          <Button Content="n!" Tag="factorial" Style="{StaticResource FunctionKey}"/>
+          <Button Content="÷" Tag=" ÷ " Style="{StaticResource FunctionKey}"/>
+          <Button x:Name="PowerButton" Content="xʸ" Tag="power" Style="{StaticResource FunctionKey}"/>
+          <Button Content="7" Tag="7" Style="{StaticResource Key}"/><Button Content="8" Tag="8" Style="{StaticResource Key}"/><Button Content="9" Tag="9" Style="{StaticResource Key}"/>
+          <Button Content="×" Tag=" × " Style="{StaticResource FunctionKey}"/>
+          <Button x:Name="TenButton" Content="10ˣ" Tag="ten" Style="{StaticResource FunctionKey}"/>
+          <Button Content="4" Tag="4" Style="{StaticResource Key}"/><Button Content="5" Tag="5" Style="{StaticResource Key}"/><Button Content="6" Tag="6" Style="{StaticResource Key}"/>
+          <Button Content="−" Tag=" − " Style="{StaticResource FunctionKey}"/>
+          <Button x:Name="LogButton" Content="log" Tag="log" Style="{StaticResource FunctionKey}"/>
+          <Button Content="1" Tag="1" Style="{StaticResource Key}"/><Button Content="2" Tag="2" Style="{StaticResource Key}"/><Button Content="3" Tag="3" Style="{StaticResource Key}"/>
+          <Button Content="+" Tag=" + " Style="{StaticResource FunctionKey}"/>
+          <Button x:Name="LnButton" Content="ln" Tag="ln" Style="{StaticResource FunctionKey}"/>
+          <Button Content="+/−" Tag="negate" Style="{StaticResource Key}"/><Button Content="0" Tag="0" Style="{StaticResource Key}"/><Button Content="." Tag="." Style="{StaticResource Key}"/>
+          <Button Content="=" Tag="equals" Style="{StaticResource Key}" Background="#1769C2" BorderBrush="#1769C2" Foreground="White" FontSize="25" ToolTip="计算并保存记录 Enter"/>
+        </UniformGrid>
+        <TextBlock Grid.Row="5" x:Name="StatusText" Text="Enter 计算并记录  ·  Ctrl+Z 撤销  ·  Ctrl+Y 重做" Foreground="{StaticResource Muted}" FontSize="11" VerticalAlignment="Bottom" TextTrimming="CharacterEllipsis"/>
+      </Grid>
+      <Border Grid.Column="2" x:Name="HistoryPanel" Style="{StaticResource Card}" Padding="14,15,14,12">
+        <Grid>
+          <Grid.RowDefinitions><RowDefinition Height="32"/><RowDefinition Height="27"/><RowDefinition Height="*"/><RowDefinition Height="30"/></Grid.RowDefinitions>
+          <TextBlock Text="计算历史" FontSize="18" FontWeight="SemiBold"/>
+          <Button x:Name="ExportHistoryButton" Content="导出" HorizontalAlignment="Right" VerticalAlignment="Top" Style="{StaticResource Quiet}" Padding="6,2" Foreground="#1769C2"/>
+          <TextBlock Grid.Row="1" x:Name="HistoryCount" Text="本次会话 · 0 条记录" Foreground="{StaticResource Muted}" FontSize="11"/>
+          <ListBox Grid.Row="2" x:Name="HistoryList" BorderThickness="0" Background="Transparent" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True">
+            <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Padding" Value="0"/><Setter Property="Margin" Value="0,0,0,8"/><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem"><ContentPresenter/></ControlTemplate></Setter.Value></Setter></Style></ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate><DataTemplate>
+              <Border Background="#F5F7FA" CornerRadius="8" Padding="12,10">
+                <StackPanel>
+                  <TextBlock Text="{Binding Caption}" FontSize="10" Foreground="#798496" Margin="0,0,0,8"/>
+                  <TextBlock Text="{Binding Expression}" TextWrapping="Wrap" FontFamily="Consolas, Microsoft YaHei UI" FontSize="14" ToolTip="{Binding ContextHint}"/>
+                  <TextBlock Text="{Binding ResultLine}" TextWrapping="Wrap" FontSize="20" Foreground="{Binding ResultColor}" Margin="0,5,0,8"/>
+                  <StackPanel Orientation="Horizontal">
+                    <Button Content="回填" Tag="restore" Padding="8,3" FontSize="11" Margin="0,0,5,0" ToolTip="回填表达式与角度模式，Ans / mem 固定为当时数值"/>
+                    <Button Content="用结果" Tag="reuse" Padding="8,3" FontSize="11" Margin="0,0,5,0"/>
+                    <Button Content="复制" Tag="copy" Padding="8,3" FontSize="11"/>
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+            </DataTemplate></ListBox.ItemTemplate>
+          </ListBox>
+          <StackPanel x:Name="EmptyHistory" Grid.Row="2" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,0,0,60">
+            <TextBlock Text="↶" FontSize="44" Foreground="#CCD8E7" HorizontalAlignment="Center" Margin="0,0,0,14"/>
+            <TextBlock Text="每一步，都有迹可循" Foreground="#596578" HorizontalAlignment="Center"/>
+            <TextBlock Text="按 Enter 或 = 保存计算&#10;点「回填」继续修改" Foreground="#8A95A6" FontSize="11" TextAlignment="Center" Margin="0,8,0,0"/>
+          </StackPanel>
+          <TextBlock Grid.Row="3" Text="会话内完整保留 · 关闭前可导出" Foreground="#8A95A6" FontSize="11" VerticalAlignment="Bottom"/>
+        </Grid>
+      </Border>
+    </Grid>
+    <Grid x:Name="PortfolioPage" Grid.Row="2" Visibility="Collapsed">
+      <Grid.RowDefinitions><RowDefinition Height="96"/><RowDefinition Height="51"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+      <UniformGrid Columns="4" Margin="-4,0,-4,0">
+        <Border Style="{StaticResource Card}" Margin="4,0" Padding="14"><StackPanel><TextBlock Text="总投入成本" Foreground="{StaticResource Muted}"/><TextBlock x:Name="TotalCost" Text="0.00" FontSize="25" FontWeight="SemiBold" Margin="0,9,0,0"/></StackPanel></Border>
+        <Border Style="{StaticResource Card}" Margin="4,0" Padding="14"><StackPanel><TextBlock Text="当前总市值" Foreground="{StaticResource Muted}"/><TextBlock x:Name="TotalValue" Text="0.00" FontSize="25" FontWeight="SemiBold" Margin="0,9,0,0"/></StackPanel></Border>
+        <Border Style="{StaticResource Card}" Margin="4,0" Padding="14"><StackPanel><TextBlock Text="预计净收益" Foreground="{StaticResource Muted}"/><TextBlock x:Name="TotalProfit" Text="0.00" FontSize="25" FontWeight="SemiBold" Foreground="#1769C2" Margin="0,9,0,0"/></StackPanel></Border>
+        <Border Style="{StaticResource Card}" Margin="4,0" Padding="14"><StackPanel><TextBlock Text="组合收益率" Foreground="{StaticResource Muted}"/><TextBlock x:Name="TotalReturn" Text="—" FontSize="25" FontWeight="SemiBold" Foreground="#1769C2" Margin="0,9,0,0"/></StackPanel></Border>
+      </UniformGrid>
+      <Grid Grid.Row="1" VerticalAlignment="Center">
+        <StackPanel Orientation="Horizontal"><Button x:Name="AddHoldingButton" Content="+ 添加持仓" Style="{StaticResource Accent}" Margin="0,0,8,0"/><Button x:Name="RemoveHoldingButton" Content="移除选中"/></StackPanel>
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"><Button x:Name="RecordPortfolioButton" Content="记录汇总" Style="{StaticResource Quiet}"/><Button x:Name="ImportPortfolioButton" Content="导入 CSV" Style="{StaticResource Quiet}"/><Button x:Name="ExportPortfolioButton" Content="导出 CSV" Style="{StaticResource Quiet}" Foreground="#1769C2"/></StackPanel>
+      </Grid>
+      <Border Grid.Row="2" Style="{StaticResource Card}" Padding="1" ClipToBounds="True">
+        <DataGrid x:Name="HoldingsGrid" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False" CanUserReorderColumns="False" HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#EDF0F4" BorderThickness="0" Background="White" RowHeight="46" SelectionMode="Single" SelectionUnit="FullRow" EnableRowVirtualization="True" ScrollViewer.HorizontalScrollBarVisibility="Auto">
+          <DataGrid.Columns>
+            <DataGridTextColumn Header="标的 / 名称" Binding="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Width="130"/>
+            <DataGridTextColumn Header="持仓数量" Binding="{Binding QuantityText, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+            <DataGridTextColumn Header="买入均价" Binding="{Binding BuyPriceText, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+            <DataGridTextColumn Header="当前价格" Binding="{Binding CurrentPriceText, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+            <DataGridTextColumn Header="买入费用" Binding="{Binding BuyFeeText, UpdateSourceTrigger=PropertyChanged}" Width="95"/>
+            <DataGridTextColumn Header="预计卖出费" Binding="{Binding SellFeeText, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+            <DataGridTextColumn Header="投入成本" Binding="{Binding CostDisplay}" IsReadOnly="True" Width="118"/>
+            <DataGridTextColumn Header="当前市值" Binding="{Binding ValueDisplay}" IsReadOnly="True" Width="118"/>
+            <DataGridTextColumn Header="净收益" Binding="{Binding ProfitDisplay}" IsReadOnly="True" Width="118"/>
+            <DataGridTextColumn Header="收益率" Binding="{Binding ReturnDisplay}" IsReadOnly="True" Width="95"/>
+            <DataGridTextColumn Header="市值占比" Binding="{Binding WeightDisplay}" IsReadOnly="True" Width="95"/>
+            <DataGridTextColumn Header="保本卖价" Binding="{Binding BreakEvenDisplay}" IsReadOnly="True" Width="110"/>
+            <DataGridTextColumn Header="输入状态" Binding="{Binding Error}" IsReadOnly="True" Width="180"/>
+          </DataGrid.Columns>
+        </DataGrid>
+      </Border>
+      <StackPanel Grid.Row="3" Margin="2,9,2,12">
+        <TextBlock x:Name="PortfolioStatus" Text="双击单元格编辑，Tab 切换。所有持仓须使用同一币种，价格由你手动填写。" Foreground="#596578" FontSize="11" TextWrapping="Wrap"/>
+        <TextBlock Text="成本 = 数量 × 买入均价 + 买入费用；净收益 = 市值 − 预计卖出费 − 成本。费用填金额，横向滚动查看收益和仓位。" Foreground="#8A95A6" FontSize="11" TextWrapping="Wrap" Margin="0,5,0,0"/>
+      </StackPanel>
+      <Border Grid.Row="4" Style="{StaticResource Card}" Padding="16,13">
+        <StackPanel>
+          <Grid><TextBlock Text="补仓均价试算" FontWeight="SemiBold" FontSize="15"/><Button x:Name="UseHoldingButton" Content="带入选中持仓" HorizontalAlignment="Right" Style="{StaticResource Quiet}" Padding="6,0" Foreground="#1769C2"/></Grid>
+          <UniformGrid Columns="5" Margin="-4,12,-4,10">
+            <StackPanel Margin="4,0"><TextBlock Text="原持仓数量" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,0,0,5"/><TextBox x:Name="AverageOldQuantity" Text="0"/></StackPanel>
+            <StackPanel Margin="4,0"><TextBlock Text="原每份成本（含费）" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,0,0,5"/><TextBox x:Name="AverageOldCost" Text="0"/></StackPanel>
+            <StackPanel Margin="4,0"><TextBlock Text="补仓数量" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,0,0,5"/><TextBox x:Name="AverageNewQuantity" Text="0"/></StackPanel>
+            <StackPanel Margin="4,0"><TextBlock Text="补仓价格" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,0,0,5"/><TextBox x:Name="AverageNewPrice" Text="0"/></StackPanel>
+            <StackPanel Margin="4,0"><TextBlock Text="本次买入费用" Foreground="{StaticResource Muted}" FontSize="11" Margin="0,0,0,5"/><TextBox x:Name="AverageFee" Text="0"/></StackPanel>
+          </UniformGrid>
+          <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><TextBlock x:Name="AverageResult" Text="填写数量和价格，即时计算补仓后的每份成本。" Foreground="#1769C2" VerticalAlignment="Center" TextWrapping="Wrap"/><Button Grid.Column="1" x:Name="RecordAverageButton" Content="计算并记录" Style="{StaticResource Accent}" Margin="12,0,0,0"/></Grid>
+        </StackPanel>
+      </Border>
+    </Grid>
+  </Grid>
+</Window>

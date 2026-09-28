@@ -1,0 +1,5 @@
+* text=auto eol=lf
+# Preserve Excel-ready UTF-8 BOM and CRLF bytes in CSV files.
+*.csv -text whitespace=cr-at-eol
+*.ico binary
+*.exe binary
