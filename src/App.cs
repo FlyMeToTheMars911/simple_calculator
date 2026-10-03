@@ -16,9 +16,9 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Microsoft.Win32;
 
-[assembly: AssemblyTitle("清算 · 科学与投资计算器")]
-[assembly: AssemblyDescription("轻量原生桌面计算器：可编辑表达式、会话历史与投资组合")]
-[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyTitle("清算 · 科学、投资与汇率计算器")]
+[assembly: AssemblyDescription("轻量原生桌面计算器：可编辑表达式、会话历史、投资组合与汇率转换")]
+[assembly: AssemblyVersion("1.1.0.0")]
 
 namespace ClearCalc
 {
@@ -31,15 +31,18 @@ namespace ClearCalc
             try
             {
                 var app = new Application();
-                var controller = new MainController();
+                var controller = new MainController(test ? new ExchangeRateService(
+                    delegate(string from, string to, System.Threading.CancellationToken token)
+                    { return System.Threading.Tasks.Task.FromResult(new ExchangeRate(from, to, "2026-10-02", 7.1m)); },
+                    delegate { return DateTime.UtcNow; }) : null);
                 if (test)
                 {
                     controller.Window.WindowStartupLocation = WindowStartupLocation.Manual;
                     controller.Window.Left = -20000; controller.Window.Top = -20000;
                     controller.Window.ShowActivated = false;
-                    controller.Window.ContentRendered += delegate
+                    controller.Window.ContentRendered += async delegate
                     {
-                        try { controller.RunUiChecks(args[1]); app.Shutdown(0); }
+                        try { await controller.RunUiChecks(args[1]); app.Shutdown(0); }
                         catch (Exception ex) { Directory.CreateDirectory(args[1]); File.WriteAllText(Path.Combine(args[1], "ui-test-failure.txt"), ex.ToString()); app.Shutdown(1); }
                     };
                 }
@@ -54,7 +57,7 @@ namespace ClearCalc
         }
     }
 
-    public sealed class MainController
+    public sealed partial class MainController
     {
         public Window Window { get; private set; }
         private readonly CalculatorSession session = new CalculatorSession();
@@ -71,7 +74,7 @@ namespace ClearCalc
         private string lastPreviewError;
         private const string PortfolioHint = "双击单元格编辑，Tab 切换。所有持仓须使用同一币种，价格由你手动填写。";
 
-        public MainController()
+        public MainController(ExchangeRateService rates = null)
         {
             using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("ClearCalc.MainWindow.xaml"))
                 Window = (Window)XamlReader.Load(stream);
@@ -90,7 +93,7 @@ namespace ClearCalc
                 Find<Button>("RedoButton").IsEnabled = editor.CanRedo;
             };
             Window.PreviewKeyDown += KeyDown;
-            Window.SizeChanged += delegate { if (!portfolioVisible) SetHistory(historyVisible && Window.ActualWidth >= 850); };
+            Window.SizeChanged += delegate { if (!portfolioVisible && !currencyVisible) SetHistory(historyVisible && Window.ActualWidth >= 850); };
             Window.Loaded += delegate { editor.Focus(); UpdateMemory(); Preview(); };
             Find<UniformGrid>("Keypad").AddHandler(Button.ClickEvent, new RoutedEventHandler(KeypadClick));
             historyList.AddHandler(Button.ClickEvent, new RoutedEventHandler(HistoryClick));
@@ -98,7 +101,7 @@ namespace ClearCalc
             On("HistoryToggle", delegate
             {
                 bool open = Find<Border>("HistoryPanel").Visibility != Visibility.Visible;
-                if (portfolioVisible) { ShowPage(false); open = true; }
+                if (portfolioVisible || currencyVisible) { ShowPage(false); open = true; }
                 historyVisible = open;
                 if (open && Window.Width < 850) Window.Width = 1080;
                 SetHistory(open);
@@ -139,6 +142,7 @@ namespace ClearCalc
             On("RecordAverageButton", delegate { Average(true); });
             foreach (string name in AverageFields) Find<TextBox>(name).TextChanged += delegate { Average(false); };
             portfolio.Changed += UpdatePortfolio;
+            InitializeCurrencyPage(rates ?? new ExchangeRateService());
             UpdatePortfolio(); UpdateHistory(); UpdateUndo();
         }
         private T Find<T>(string name) where T : class { return Window.FindName(name) as T; }
@@ -154,6 +158,9 @@ namespace ClearCalc
         }
         private void ShowPage(bool investment)
         {
+            currencyVisible = false;
+            Find<ScrollViewer>("CurrencyPage").Visibility = Visibility.Collapsed;
+            Find<Button>("CurrencyTab").Style = (Style)Window.Resources[typeof(Button)];
             portfolioVisible = investment;
             if (investment && Window.Width < 1000) Window.Width = 1080;
             Window.MinWidth = investment ? 1000 : 500;
@@ -238,6 +245,14 @@ namespace ClearCalc
         private void KeyDown(object sender, KeyEventArgs e)
         {
             ModifierKeys modifiers = Keyboard.Modifiers;
+            if (currencyVisible)
+            {
+                if (e.Key == Key.Enter && Find<TextBox>("CurrencyAmount").IsKeyboardFocusWithin)
+                { RecordConversion(); e.Handled = true; }
+                else if (modifiers == (ModifierKeys.Control | ModifierKeys.Shift) && e.Key == Key.C)
+                { CopyConversion(); e.Handled = true; }
+                return;
+            }
             if (modifiers == (ModifierKeys.Control | ModifierKeys.Shift) && e.Key == Key.C && !portfolioVisible)
             { CopyResult(); e.Handled = true; return; }
             if (modifiers == ModifierKeys.Control && e.Key == Key.L && !portfolioVisible)
@@ -325,7 +340,7 @@ namespace ClearCalc
         {
             if (entry.IsFinancial)
             {
-                ReplaceAll(entry.ExactValue); status.Text = "已带入投资计算结果；科学计算使用约 15 位有效数字"; return;
+                ReplaceAll(entry.ExactValue); status.Text = "已带入十进制计算结果；科学计算使用约 15 位有效数字"; return;
             }
             session.Mode = entry.Mode; UpdateAngle();
             string expression = Regex.Replace(entry.Expression, @"\b(ans|mem)\b", delegate(Match match)
@@ -489,13 +504,14 @@ namespace ClearCalc
                 "函数与按键\n选中文字时，函数对选区生效。平方、根号等一元按键在未选择时作用于整个表达式；三角函数菜单在光标处插入。2ⁿᵈ 切换第二功能。^ 为乘方，% 固定表示除以 100；exp 按键插入 E（如 2.5E6）。函数 exp(x) 表示 e 的 x 次幂。\n\n" +
                 "示例\n(128.6 - 112.4) * 300 - 8\nsin(30)^2 + cos(30)^2\nlog(8, 2) · root(27, 3) · 2π · 5!\n\n" +
                 "历史与内存\n每次明确计算都保存，包含错误记录；预览不入历史。回填会恢复角度模式并固定原来的 Ans / mem。MS 可存多个值，MR / M+ / M− 操作最新一条。投资计算的回填带入结果。\n\n" +
-                "投资组合\n同一币种、非负持仓；费用填写金额。收益率 = 净收益 / 含费成本，仓位 = 单项市值 / 总市值，保本卖价包含填写的预计卖出费。不自动拉取行情、汇率、税率；不统计分红和已实现收益。CSV 导入会追加持仓。\n\n" +
+                "投资组合\n同一币种、非负持仓；费用填写金额。收益率 = 净收益 / 含费成本，仓位 = 单项市值 / 总市值，保本卖价包含填写的预计卖出费。不自动拉取行情、税率或转换持仓币种；不统计分红和已实现收益。CSV 导入会追加持仓。\n\n" +
+                "汇率转换\n选择币种并输入非负金额，即时换算。汇率来自 Frankfurter 的每日参考汇率，显示数据日期；刷新需联网，无需 API Key。缓存保留一小时，获取失败时明确标记使用的会话缓存。结果可复制、记入历史或带入科学计算，金额不会发送到服务端。\n\n" +
                 "精度与保存\n科学计算使用约 15～16 位有效数字；投资页使用 decimal（28～29 位有效数字），金额仅在显示时保留两位。历史和持仓只在本次运行保留，关闭前可导出。",
                 "清算 · 使用说明", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private static void Assert(bool condition, string message) { if (!condition) throw new Exception(message); }
-        public void RunUiChecks(string directory)
+        public async System.Threading.Tasks.Task RunUiChecks(string directory)
         {
             Directory.CreateDirectory(directory);
             ReplaceAll("12+34"); editor.Select(3, 2); Insert("8");
@@ -530,7 +546,8 @@ namespace ClearCalc
             Assert(session.History[0].IsFinancial, "Financial history snapshot");
             Assert(Find<TextBlock>("TotalCost").Text == "38,497.00", "Portfolio totals bound");
             SaveScreenshot(Path.Combine(directory, "portfolio.png"));
-            File.WriteAllText(Path.Combine(directory, "ui-test-passed.txt"), "UI checks passed: edit, undo, redo, caret deletion, calculation, history restore, memory, second functions, errors, compact layout, portfolio bindings, financial snapshots.\r\n", Encoding.UTF8);
+            await RunCurrencyUiChecks(directory);
+            File.WriteAllText(Path.Combine(directory, "ui-test-passed.txt"), "UI checks passed: edit, undo, redo, caret deletion, calculation, history restore, memory, second functions, errors, compact layout, portfolio bindings, financial snapshots, currency conversion, identity, invalid amounts, overflow, swap, result reuse, currency layouts, request races and failure recovery.\r\n", Encoding.UTF8);
         }
         private void SaveScreenshot(string path)
         {

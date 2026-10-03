@@ -16,14 +16,15 @@ namespace ClearCalc
         public DateTime Time { get; set; }
         public int Number { get; set; }
         public bool IsFinancial { get; set; }
+        public bool IsCurrencyConversion { get; set; }
         public string ExactValue { get; set; }
         public bool IsError { get { return !Value.HasValue; } }
-        public string Caption { get { return "#" + Number.ToString("D2") + "   ·   " + Time.ToString("HH:mm:ss") + "   ·   " + (IsFinancial ? "投资计算" : Mode.ToString()); } }
+        public string Caption { get { return "#" + Number.ToString("D2") + "   ·   " + Time.ToString("HH:mm:ss") + "   ·   " + (IsCurrencyConversion ? "汇率转换" : IsFinancial ? "投资计算" : Mode.ToString()); } }
         public string ResultLine { get { return IsError ? Result : "= " + Result; } }
         public string ResultColor { get { return IsError ? "#B42318" : "#1266BC"; } }
         public string ContextHint
         {
-            get { return IsFinancial ? "投资页使用十进制金额计算；回填将带入结果。" : "计算时 Ans = " + ExpressionEngine.Literal(AnswerContext) + "；mem = " + ExpressionEngine.Literal(MemoryContext); }
+            get { return IsFinancial ? "使用十进制金额计算；回填将带入结果。" : "计算时 Ans = " + ExpressionEngine.Literal(AnswerContext) + "；mem = " + ExpressionEngine.Literal(MemoryContext); }
         }
         public string CopyText { get { return Expression + Environment.NewLine + ResultLine + "  [" + (IsFinancial ? "十进制金额" : Mode.ToString()) + "]"; } }
     }
@@ -65,10 +66,11 @@ namespace ClearCalc
             History.Insert(0, entry);
             return entry;
         }
-        public HistoryEntry RecordFinancial(string description, decimal result)
+        public HistoryEntry RecordFinancial(string description, decimal result, bool currencyConversion = false)
         {
             var entry = new HistoryEntry { Expression = description, Value = (double)result, ExactValue = Money.Exact(result),
-                Result = Money.Exact(result), IsFinancial = true, Time = DateTime.Now, Number = History.Count + 1, Mode = Mode };
+                Result = Money.Exact(result), IsFinancial = true, IsCurrencyConversion = currencyConversion,
+                Time = DateTime.Now, Number = History.Count + 1, Mode = Mode };
             History.Insert(0, entry);
             return entry;
         }

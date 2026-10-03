@@ -28,10 +28,14 @@ public static class CoreTests
         catch (FormatException) { Check(true, "Invalid CSV"); return; }
         throw new Exception("Expected an import error");
     }
-    public static int Main()
+    public static int Main(string[] args)
     {
         try
         {
+            if (args.Length == 1 && args[0] == "--rates-smoke")
+            {
+                ExchangeRateTests.Smoke(Check).GetAwaiter().GetResult(); return 0;
+            }
             Equal("2+3*4", 14); Equal("(2+3)*4", 20); Equal("10-3-2", 5);
             Equal("2^3^2", 512); Equal("-2^2", -4); Equal("(-2)^2", 4); Equal("2^-3", 0.125);
             Equal("2*-3", -6); Equal("2--3", 5); Equal("0.1+0.2", 0.3);
@@ -105,7 +109,8 @@ public static class CoreTests
             var empty = new Holding(); Check(empty.Valid && empty.Return == null && empty.BreakEven == null, "Zero cost and quantity avoid division");
             session.RecordFinancial("精确金额", 12345678901234567890.12345678m);
             Check(session.History[0].ExactValue == "12345678901234567890.12345678", "Financial history preserves decimal precision");
-            Console.WriteLine("PASS: " + count + " checks (parser, scientific functions, errors, session history, decimal finance, CSV). ");
+            ExchangeRateTests.Run(Check).GetAwaiter().GetResult();
+            Console.WriteLine("PASS: " + count + " checks (parser, scientific functions, errors, session history, decimal finance, CSV, exchange rates). ");
             return 0;
         }
         catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
